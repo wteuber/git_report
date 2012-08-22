@@ -5,6 +5,7 @@
 # simply run "ruby git_reports.rb" in a git repository
 
 puts "git log --numstat --no-merges"
+
 # retrieve data
 log = %x"git log --numstat --no-merges"
 logs = log.split(/(^commit [0-9a-f]{40})\n/)[1..-1]
@@ -12,12 +13,12 @@ t = true; logs.select!{t=!t}
 
 # parse
 stat = logs.map do |commit|
-  commit = commit.split(/\n\n/).map do |l|
+  commit = commit.split(/\n/).map do |l|
     l.scan(/\AAuthor: ([^\n]*)/)[0] ||
       l.scan(/\A([\d]+)\t([\d]+)\t/)[0]
   end.flatten(1).compact
-  commit[1] = commit[1].to_i
-  commit[2] = commit[2].to_i
+  t = false; commit[1] = commit[1..-1].select!{t=!t}.map(&:to_i).reduce(&:+)
+  t = true; commit[2] = commit[1..-1].select!{t=!t}.map(&:to_i).reduce(&:+)
   commit
 end.group_by{|e| e[0]}
 
@@ -63,5 +64,6 @@ tbl_foot = [''.ljust(nam_width, ' '),
   sum_loc_del.to_s.rjust(del_width, ' ')] * ' | '
 
 table = [tbl_head, tbl_hor_lin, tbl_cont, tbl_hor_eql, tbl_foot] * "\n"
+
 # output:
 puts table
